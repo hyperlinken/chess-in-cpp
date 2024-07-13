@@ -1,12 +1,6 @@
 #include<iostream>
 using namespace std;
 
-class piece{
-    public:
-    piece(){
-    }
-};
-
 struct p{
         int id;
         int x,y;
@@ -16,10 +10,10 @@ struct p{
         int moved;
 };
 
-
 class board{
 
     public:
+
     struct p wk,wq,wr1,wr2,wh1,wh2,wb1,wb2,w1,w2,w3,w4,w5,w6,w7,w8;
     struct p bk,bq,br1,br2,bh1,bh2,bb1,bb2,b1,b2,b3,b4,b5,b6,b7,b8;
 
@@ -46,21 +40,6 @@ class board{
     int available[30]={-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2};
     int check1=0, check2=0;
 
-    void piecing(struct p * n,int s , int x, int y){
-        n->id = s;
-        n->y = y;
-        n->x = x;
-        n->deadx = x;
-        n->deady = y+8;
-        n->moved = 0;
-        // n->direct = &box[x][y];
-        box[x][y] = n->id;
-        for(int k=0 ; k<=59 ; k++) {
-            n->arr[k] = -2;
-        }
-        
-    }
-
     int castle(struct p * h){
         int c ,i,j,initialize;
         string t;
@@ -78,12 +57,17 @@ class board{
         else if (a[initialize + 1]->x == i && a[initialize +1]->y == j) r = a[initialize+1] ;
         
         if( r == NULL){
-            cout<<"INVALID INPUT";
+            cout<<"INVALID INPUT"<<endl;
             return 1;
         }
         if(c == 0 && h->moved == 0 && r->moved == 0 ){
             int diff = h->y - r->y;
             if(diff>0 && safe(h->id/10 ,h->x,h->y - 2)){
+                for(int i= r->y + 1 ; i < h->y ; i++){
+                    if(box[h->x][h->y + i] != 0){
+                        return 1;
+                    }
+                }
                 box[h->x][h->y] = 0;
                 box[r->x][r->y] = 0;
                 box[h->x][h->y - 2] = h->id;
@@ -95,6 +79,11 @@ class board{
                 return 0;
             }
             else if(diff<0 && safe(h->id/10 ,h->x,h->y + 2)){
+                for(int i= h->y + 1 ; i < r->y ; i++){
+                    if(box[h->x][h->y + i] != 0){
+                        return 1;
+                    }
+                }
                 box[h->x][h->y] = 0;
                 box[r->x][r->y] = 0;
                 box[h->x][h->y + 2] = h->id;
@@ -669,71 +658,10 @@ class board{
         return 0;
     }
 
-    int player(int turn){
-        render();
-        int wd = 0;
-        wd = windraw(turn);
-        display();
-        if(wd == 1) return 1;
-        else if(wd == 3) return 3;
-
-        string from,to;
-
-        int p , q;
-        int ok=1, r,cast;
-        struct p ** h; 
-
-        while(ok){
-            cast=1;
-            cout<<"enter piece position that move : ";
-            cin>>from;
-            struct p * a;
-
-            if(from == "castle"){
-                int c;
-                (turn == 0) ? a=p1[9] : a=p2[9];
-                (turn == 0) ? c=check1 : c=check2;
-                if(c == 0 && a->moved == 0) cast = castle(a);
-                else cout<<"NOT AVAILABLE"<<endl;
-                if(cast == 0) break;
-                continue;
-            } 
-
-            p = (int)from[0] - 96;  //abcdefgh
-            q = (int)from[1] - 48;  //12345678
-
-            (turn == 0) ? h = p1 : h = p2;
-            int v=-1 , ok=1;
-
-            for(r = 0; r<16 ; r++){
-                if(h[r]->x == p && h[r]->y == q ) {
-                    ok = 2;
-                    break;
-                }
-            }
-            if(ok != 2){
-                cout<<"ENETR VALID POSITION"<<endl;
-                continue;
-            } 
-            if(availpiece[r] == 1 ) ok=1;
-            else{
-                cout<<"CHECK!!!"<<endl;
-                continue;
-            }
-
-            while(ok && cast){
-                cout<<"enter piece position where it move : ";
-                cin>>to;
-                ok = mov(h[r] , from , to);
-            }
-        }
-        return 5;
-    }
-
     void display(){
         cout<<"    ";
         for(int i = 0 ; i<8; i++){
-            cout<<' '<<(char)('1'+ i)<<' ';
+            cout<<"  "<<(char)('1'+ i)<<"  ";
         }
         cout<<endl<<"   ";
         for(int j=0 ; j<21 ; j++) cout<<"--";
@@ -865,6 +793,85 @@ class board{
         }
         cout<<"ENTER VALID INPUT"<<endl;
         return 1;
+    }
+
+    // public:
+
+    int player(int turn){
+        render();
+        int wd = 0;
+        wd = windraw(turn);
+        display();
+        if(wd == 1) return 1;
+        else if(wd == 3) return 3;
+
+        string from,to;
+
+        int p , q;
+        int ok=1, r,cast;
+        struct p ** h; 
+
+        while(ok){
+            cast=1;
+            cout<<"enter piece position that move : ";
+            cin>>from;
+            struct p * a;
+
+            if(from == "castle"){
+                int c;
+                (turn == 0) ? a=p1[9] : a=p2[9];
+                (turn == 0) ? c=check1 : c=check2;
+                if(c == 0 && a->moved == 0) cast = castle(a);
+                else cout<<"NOT AVAILABLE"<<endl;
+                if(cast == 0) break;
+                cout<<"NOT POSSIBLE"<<endl;
+                continue;
+            } 
+
+            p = (int)from[0] - 96;  //abcdefgh
+            q = (int)from[1] - 48;  //12345678
+
+            (turn == 0) ? h = p1 : h = p2;
+            int v=-1 , ok=1;
+
+            for(r = 0; r<16 ; r++){
+                if(h[r]->x == p && h[r]->y == q ) {
+                    ok = 2;
+                    break;
+                }
+            }
+            if(ok != 2){
+                cout<<"ENETR VALID POSITION"<<endl;
+                continue;
+            } 
+            if(availpiece[r] == 1 ) ok=1;
+            else{
+                cout<<"CHECK!!!"<<endl;
+                continue;
+            }
+
+            while(ok && cast){
+                cout<<"enter piece position where it move : ";
+                cin>>to;
+                ok = mov(h[r] , from , to);
+            }
+            if(ok == 0) break;
+        }
+        return 5;
+    }
+
+    void piecing(struct p * n,int s , int x, int y){
+        n->id = s;
+        n->y = y;
+        n->x = x;
+        n->deadx = x;
+        n->deady = y+8;
+        n->moved = 0;
+        box[x][y] = n->id;
+        for(int k=0 ; k<=59 ; k++) {
+            n->arr[k] = -2;
+        }
+        
     }
 
 };
