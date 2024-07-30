@@ -902,7 +902,7 @@ void game(){
     b.piecing(&b.w3,11,2,3);
     b.piecing(&b.w4,11,2,4);
     b.piecing(&b.w5,11,2,5);
-    b.piecing(&b.w6,11,4,6);
+    b.piecing(&b.w6,11,2,6);
     b.piecing(&b.w7,11,2,7);
     b.piecing(&b.w8,11,2,8);
     b.piecing(&b.wk,15,1,4);
@@ -918,7 +918,7 @@ void game(){
     b.piecing(&b.b2,21,7,2);
     b.piecing(&b.b3,21,7,3);
     b.piecing(&b.b4,21,7,4);
-    b.piecing(&b.b5,21,5,5);
+    b.piecing(&b.b5,21,7,5);
     b.piecing(&b.b6,21,7,6);
     b.piecing(&b.b7,21,7,7);
     b.piecing(&b.b8,21,7,8);
