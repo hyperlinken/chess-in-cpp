@@ -643,24 +643,6 @@ class board{
                 if(a->arr[z] != -1) piecesize++,availpiece[9] = 1;
                 z+=2;
             }
-            // for(int i=0; i<16; i++){
-            //     cout<<availpiece[i]<<" ";
-            // }
-
-            // cout<<endl;
-
-            // for(int i=0; i<30; i++){
-            //     cout<<available[i];
-            // }
-
-            // // int l = 0;
-            // // while(available[l] != -2){
-            // //     cout<<available[l]<<" "<<available[l+1]<<"  ";
-            // //     l+=2;
-            // // }
-            
-            // cout<<endl;
-            
             if(availsize + piecesize == 0) return 1; //win  by piece after check , player have no moves
         }
         else{
@@ -958,12 +940,12 @@ void game(){
 
     while(result){
         if(turn == 0){
-            cout<<"\t\t\t\t\t\t\t"<<p1<<" Turns"<<endl;
+            cout<<"\t\t\t\t\t\t\t"<<p1<<" Turns - 1st player"<<endl;
             result = b.player(turn);
             turn++;
         }
         else if (turn == 1){
-            cout<<"\t\t\t\t\t\t\t"<<p2<<" Turns"<<endl;
+            cout<<"\t\t\t\t\t\t\t"<<p2<<" Turns - 2nd player"<<endl;
             result = b.player(turn);
             turn--;
         }
