@@ -1,4 +1,4 @@
-#include<iostream>
+ #include<iostream>
 using namespace std;
 
 struct p{
@@ -143,6 +143,7 @@ class board{
                 }
             }
         }
+
     }
     void render(){
         if(checkto == 1) check1 = 1;
@@ -185,6 +186,12 @@ class board{
                     king(p2[i]);
                     break;
             }
+        }
+
+        struct p * h;
+        if(checkto !=0 ){
+            (checkto == 1) ? h = p1[9] : h = p2[9];
+            aftercheck(h);
         }
     }
 
@@ -636,7 +643,25 @@ class board{
                 if(a->arr[z] != -1) piecesize++,availpiece[9] = 1;
                 z+=2;
             }
-            if(availsize + piecesize == 0) return 1; //win  by piece afteer check player have no moves
+            // for(int i=0; i<16; i++){
+            //     cout<<availpiece[i]<<" ";
+            // }
+
+            // cout<<endl;
+
+            // for(int i=0; i<30; i++){
+            //     cout<<available[i];
+            // }
+
+            // // int l = 0;
+            // // while(available[l] != -2){
+            // //     cout<<available[l]<<" "<<available[l+1]<<"  ";
+            // //     l+=2;
+            // // }
+            
+            // cout<<endl;
+            
+            if(availsize + piecesize == 0) return 1; //win  by piece after check , player have no moves
         }
         else{
             struct p ** h;                  
@@ -832,16 +857,26 @@ class board{
             q = (int)from[1] - 48;  //12345678
 
             (turn == 0) ? h = p1 : h = p2;
-            int v=-1 , ok=1;
+            int v=-1 , ok=1 , ymoves=0;
 
             for(r = 0; r<16 ; r++){
                 if(h[r]->x == p && h[r]->y == q ) {
                     ok = 2;
+                    for(int j=0; j<60 ; j++){
+                        if(h[r]->arr[j] != -2 ){
+                            ymoves = 1;
+                            break;
+                        }
+                    }
                     break;
                 }
             }
             if(ok != 2){
-                cout<<"ENETR VALID POSITION"<<endl;
+                cout<<"ENTER VALID POSITION"<<endl;
+                continue;
+            } 
+            if(ymoves == 0 && checkto == 0){
+                cout<<"HAVE NO PLACE TO MOVE"<<endl;
                 continue;
             } 
             if(availpiece[r] == 1 ) ok=1;
@@ -853,6 +888,7 @@ class board{
             while(ok && cast){
                 cout<<"enter piece position where it move : ";
                 cin>>to;
+                if(to == "cancel") break;
                 ok = mov(h[r] , from , to);
             }
             if(ok == 0) break;
@@ -884,7 +920,7 @@ void game(){
     b.piecing(&b.w3,11,2,3);
     b.piecing(&b.w4,11,2,4);
     b.piecing(&b.w5,11,2,5);
-    b.piecing(&b.w6,11,2,6);
+    b.piecing(&b.w6,11,4,6);
     b.piecing(&b.w7,11,2,7);
     b.piecing(&b.w8,11,2,8);
     b.piecing(&b.wk,15,1,4);
@@ -900,7 +936,7 @@ void game(){
     b.piecing(&b.b2,21,7,2);
     b.piecing(&b.b3,21,7,3);
     b.piecing(&b.b4,21,7,4);
-    b.piecing(&b.b5,21,7,5);
+    b.piecing(&b.b5,21,5,5);
     b.piecing(&b.b6,21,7,6);
     b.piecing(&b.b7,21,7,7);
     b.piecing(&b.b8,21,7,8);
