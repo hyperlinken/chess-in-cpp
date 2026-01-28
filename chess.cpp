@@ -81,7 +81,7 @@ private:
         return false;
     }
 
-    // generic ray for rook/bishop/queen
+    // ray for rook/bishop/queen
     void ray(struct p *n, int dx, int dy, int &k)
     {
         int x = n->x + dx;
@@ -103,7 +103,7 @@ private:
                     n->arr[k++] = x;
                     n->arr[k++] = y;
 
-                    // ✅ correct king detection: KING = 5, not 6
+                    // correct king detection: KING = 5, not 6
                     if (box[x][y] / 10 == enemy && box[x][y] % 10 == KING)
                     {
                         checkto = enemy;
@@ -403,8 +403,8 @@ public:
     // }
     void render()
     {
-        clear();     // ✅ must reset available/check/availpiece
-        checkto = 0; // ✅ reset check
+        clear();     // reset available/check/availpiece
+        checkto = 0; // reset check
 
         // generate moves for both sides
         for (int i = 0; i < 16; i++)
@@ -465,7 +465,7 @@ public:
         // if someone is in check, compute "blocking/capturing squares" (single-check only)
         if (checkto != 0)
         {
-            struct p *checkedKing = (checkto == 1 ? &wk : &bk); // ✅ king is wk/bk
+            struct p *checkedKing = (checkto == 1 ? &wk : &bk); // king is wk/bk
             aftercheck(checkedKing);
         }
     }
@@ -586,7 +586,7 @@ public:
                 }
             }
 
-            // captures
+            // capture
             for (int dy : {-1, +1})
             {
                 int nx = n->x + 1, ny = n->y + dy;
@@ -618,7 +618,7 @@ public:
                 }
             }
 
-            // captures
+            // capture
             for (int dy : {-1, +1})
             {
                 int nx = n->x - 1, ny = n->y + dy;
@@ -1300,7 +1300,7 @@ public:
 
             // king moves
             struct p *king = (checkto == 1) ? &wk : &bk;
-            availpiece[8] = (king->arr[0] != -2) ? 1 : 0; // ✅ king has any legal move?
+            availpiece[8] = (king->arr[0] != -2) ? 1 : 0; // king has any legal move?
 
             if (availsize == 0 && availpiece[8] == 0) return 1; // checkmate
         }
@@ -1389,7 +1389,7 @@ public:
         static const string B[7] = {
             "  ", u8"\u265F ", u8"\u265D ", u8"\u265E ", u8"\u265C ", u8"\u265A ", u8"\u265B "};
 
-        // your ids: 1x = white, 2x = black
+        // ids: 1 = white, 2 = black
         return (player == 1) ? B[piece] : W[piece];
 
     }
@@ -1578,7 +1578,7 @@ public:
 
         if (checkto != 0)
         {
-            // ✅ if KING is moving in check: only need to be in king's arr (already safe filtered)
+            //if KING is moving in check: only need to be in king's arr
             if (n->id % 10 == KING)
             {
                 if (moveInArr(n, i, j)) alright = 2;
