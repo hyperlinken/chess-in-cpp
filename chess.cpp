@@ -81,7 +81,7 @@ private:
         return false;
     }
 
-    // ray for rook/bishop/queen
+    // generic ray for rook/bishop/queen
     void ray(struct p *n, int dx, int dy, int &k)
     {
         int x = n->x + dx;
@@ -103,7 +103,7 @@ private:
                     n->arr[k++] = x;
                     n->arr[k++] = y;
 
-                    // correct king detection: KING = 5, not 6
+                    // ✅ correct king detection: KING = 5, not 6
                     if (box[x][y] / 10 == enemy && box[x][y] % 10 == KING)
                     {
                         checkto = enemy;
@@ -116,6 +116,32 @@ private:
             y += dy;
         }
     }
+    // ===== EN PASSANT STATE =====
+    // If epX/epY != 0 => en passant capture is possible to (epX, epY) this turn only.
+    int epX = 0, epY = 0;
+
+    // Remove an enemy piece located at (x,y) from the board and put it in its grave.
+    void killAt(struct p **enemyPieces, int x, int y)
+    {
+        if (!inBoard(x, y)) return;
+        if (box[x][y] <= 0) return;
+
+        for (int z = 0; z < 16; z++)
+        {
+            if (enemyPieces[z]->x == x && enemyPieces[z]->y == y)
+            {
+                // clear board square first
+                box[x][y] = 0;
+
+                enemyPieces[z]->x = enemyPieces[z]->deadx;
+                enemyPieces[z]->y = enemyPieces[z]->deady;
+
+                box[enemyPieces[z]->deadx][enemyPieces[z]->deady] = enemyPieces[z]->id;
+                return;
+            }
+        }
+    }
+
 
 public:
     struct p wk, wq, wr1, wr2, wh1, wh2, wb1, wb2, w1, w2, w3, w4, w5, w6, w7, w8;
@@ -403,8 +429,8 @@ public:
     // }
     void render()
     {
-        clear();     // reset available/check/availpiece
-        checkto = 0; // reset check
+        clear();     // must reset available/check/availpiece
+        checkto = 0; //reset check
 
         // generate moves for both sides
         for (int i = 0; i < 16; i++)
@@ -462,7 +488,7 @@ public:
             }
         }
 
-        // if someone is in check, compute "blocking/capturing squares" (single-check only)
+        // if someone is in check, compute "blocking/capturing squares" (single check)
         if (checkto != 0)
         {
             struct p *checkedKing = (checkto == 1 ? &wk : &bk); // king is wk/bk
@@ -578,7 +604,8 @@ public:
             {
                 n->arr[k++] = n->x + 1;
                 n->arr[k++] = n->y;
-                // double move only if first is empty
+
+                // double move
                 if (n->x == 2 && box[n->x + 2][n->y] == 0)
                 {
                     n->arr[k++] = n->x + 2;
@@ -586,20 +613,47 @@ public:
                 }
             }
 
-            // capture
+            // normal capture
             for (int dy : {-1, +1})
             {
                 int nx = n->x + 1, ny = n->y + dy;
-                if (!inBoard(nx, ny))
-                    continue;
+                if (!inBoard(nx, ny)) continue;
+
                 if (box[nx][ny] > 0 && box[nx][ny] / 10 == enemy)
                 {
                     n->arr[k++] = nx;
                     n->arr[k++] = ny;
+
                     if (box[nx][ny] % 10 == KING)
                     {
                         checkto = enemy;
                         append(n);
+                    }
+                }
+            }
+
+            // ---------------------------------EN PASSANT (WHITE)
+            // White captures to (x+1, y±1) if that equals ep target, and enemy pawn is beside us.
+            if (epX != 0 && epY != 0 && box[epX][epY] == 0)
+            {
+                for (int dy : {-1, +1})
+                {
+                    int nx = n->x + 1;
+                    int ny = n->y + dy;
+                    if (!inBoard(nx, ny)) continue;
+
+                    if (nx == epX && ny == epY)
+                    {
+                        int capX = n->x;   // captured pawn is on same rank as us
+                        int capY = ny;     // file we capture into
+                        if (inBoard(capX, capY) &&
+                            box[capX][capY] > 0 &&
+                            box[capX][capY] / 10 == enemy &&
+                            box[capX][capY] % 10 == PAWN)
+                        {
+                            n->arr[k++] = nx;
+                            n->arr[k++] = ny;
+                        }
                     }
                 }
             }
@@ -611,6 +665,8 @@ public:
             {
                 n->arr[k++] = n->x - 1;
                 n->arr[k++] = n->y;
+
+                // double move
                 if (n->x == 7 && box[n->x - 2][n->y] == 0)
                 {
                     n->arr[k++] = n->x - 2;
@@ -618,16 +674,17 @@ public:
                 }
             }
 
-            // capture
+            // normal capture
             for (int dy : {-1, +1})
             {
                 int nx = n->x - 1, ny = n->y + dy;
-                if (!inBoard(nx, ny))
-                    continue;
+                if (!inBoard(nx, ny)) continue;
+
                 if (box[nx][ny] > 0 && box[nx][ny] / 10 == enemy)
                 {
                     n->arr[k++] = nx;
                     n->arr[k++] = ny;
+
                     if (box[nx][ny] % 10 == KING)
                     {
                         checkto = enemy;
@@ -635,8 +692,36 @@ public:
                     }
                 }
             }
+
+            // ------------------------------------EN PASSANT (BLACK)
+            // Black captures to (x-1, y±1) if that equals ep target, and enemy pawn is beside us.
+            if (epX != 0 && epY != 0 && box[epX][epY] == 0)
+            {
+                for (int dy : {-1, +1})
+                {
+                    int nx = n->x - 1;
+                    int ny = n->y + dy;
+                    if (!inBoard(nx, ny)) continue;
+
+                    if (nx == epX && ny == epY)
+                    {
+                        int capX = n->x;  // captured pawn is on same rank as us
+                        int capY = ny;
+
+                        if (inBoard(capX, capY) &&
+                            box[capX][capY] > 0 &&
+                            box[capX][capY] / 10 == enemy &&
+                            box[capX][capY] % 10 == PAWN)
+                        {
+                            n->arr[k++] = nx;
+                            n->arr[k++] = ny;
+                        }
+                    }
+                }
+            }
         }
     }
+
 
     // void horse(struct p * n){
     //     int a=n->x , b=n->y;
@@ -1063,7 +1148,7 @@ public:
             return 0;
         int enemy = (player == 1 ? 2 : 1);
 
-        // 1) Knight attacks
+        // 1) Knight attack
         const int kdx[8] = {1, 2, 2, 1, -1, -2, -2, -1};
         const int kdy[8] = {2, 1, -1, -2, -2, -1, 1, 2};
         for (int i = 0; i < 8; i++)
@@ -1075,7 +1160,7 @@ public:
                 return 0;
         }
 
-        // 2) Pawn attacks
+        // 2) Pawn attack
         if (enemy == 1)
         {
             // white pawn attacks (x+1,y±1) => pawn would be at (a-1, b±1)
@@ -1097,7 +1182,7 @@ public:
             }
         }
 
-        // 3) Enemy king adjacency
+        // 3) Enemy king adjacent
         for (int dx = -1; dx <= 1; dx++)
         {
             for (int dy = -1; dy <= 1; dy++)
@@ -1281,7 +1366,7 @@ public:
             for (int idx = 0; idx < 16; idx++)
             {
                 availpiece[idx] = 0;
-                if (idx == 8) continue; // ✅ skip king
+                if (idx == 8) continue; // skip king
 
                 for (int x = 0; x < 60 && h[idx]->arr[x] != -2; x += 2)
                 {
@@ -1300,7 +1385,7 @@ public:
 
             // king moves
             struct p *king = (checkto == 1) ? &wk : &bk;
-            availpiece[8] = (king->arr[0] != -2) ? 1 : 0; // king has any legal move?
+            availpiece[8] = (king->arr[0] != -2) ? 1 : 0; //king has any legal move?
 
             if (availsize == 0 && availpiece[8] == 0) return 1; // checkmate
         }
@@ -1325,15 +1410,14 @@ public:
         if (file < 'a' || file > 'h') return false;
         if (rank < '1' || rank > '8') return false;
 
-        y = file - 'a' + 1;   // file -> y (1..8)
-        x = rank - '0';       // rank -> x (1..8)
+        y = file - 'a' + 1;   // file -> y (1...,,..8)
+        x = rank - '0';       // rank -> x (1......8)
         return true;
     }
 
 
     void printLine()
     {
-        // tune this once if spacing changes
         const int LINE = 43;
         cout << "   ";
         for (int i = 0; i < LINE; i++)
@@ -1379,7 +1463,7 @@ public:
             return "  "; // empty, -1, -2 => blank
 
         int player = v / 10; // 1 or 2
-        int piece = v % 10;  // 1..6
+        int piece = v % 10;  // 1......6
         if (piece < 1 || piece > 6)
             return "  ";
 
@@ -1578,7 +1662,7 @@ public:
 
         if (checkto != 0)
         {
-            //if KING is moving in check: only need to be in king's arr
+            // if KING is moving in check: only need to be in king's arr 
             if (n->id % 10 == KING)
             {
                 if (moveInArr(n, i, j)) alright = 2;
@@ -1596,23 +1680,61 @@ public:
 
         if (alright == 2)
         {
-            box[p][q] = 0;
-            n->x = i; n->y = j;
+            int me = n->id / 10;
+            int dir = (me == 1 ? +1 : -1);
+            bool isPawn = (n->id % 10 == PAWN);
 
-            struct p **h = (n->id / 10 == 1) ? p2 : p1;
+            struct p **enemyPieces = (me == 1) ? p2 : p1;
 
-            if (box[i][j] > 0)
+            // Detect EN PASSANT capture:
+            bool doEP = false;
+            int capX = -1, capY = -1;
+
+            if (isPawn && epX != 0 && epY != 0)
             {
-                for (int z = 0; z < 16; z++)
+                // pawn moved diagonally into empty ep target square
+                if (i == epX && j == epY && box[i][j] == 0 && (abs(j - q) == 1) && (i == p + dir))
                 {
-                    if (h[z]->x == i && h[z]->y == j)
+                    capX = i - dir; // pawn to be removed is one step behind target
+                    capY = j;
+
+                    if (inBoard(capX, capY) &&
+                        box[capX][capY] > 0 &&
+                        box[capX][capY] / 10 != me &&
+                        box[capX][capY] % 10 == PAWN)
                     {
-                        h[z]->x = h[z]->deadx;
-                        h[z]->y = h[z]->deady;
-                        box[h[z]->deadx][h[z]->deady] = h[z]->id;
-                        break;
+                        doEP = true;
                     }
                 }
+            }
+
+            // Clear EP by default (it only lasts for one reply move)
+            epX = 0; epY = 0;
+
+            // remove mover from old square
+            box[p][q] = 0;
+
+            // handle capture
+            if (doEP)
+            {
+                // remove the pawn we capture en passant
+                killAt(enemyPieces, capX, capY);
+            }
+            else if (box[i][j] > 0)
+            {
+                // normal capture
+                killAt(enemyPieces, i, j);
+            }
+
+            // move piece
+            n->x = i;
+            n->y = j;
+
+            // if pawn double-moved, set EP target square
+            if (isPawn && (j == q) && (abs(i - p) == 2))
+            {
+                epX = (p + i) / 2; // 3 for 2->4, 6 for 7->5
+                epY = q;
             }
 
             promotion(n);
